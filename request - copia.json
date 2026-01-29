@@ -1,0 +1,50 @@
+{
+  "projectName": "Demo",
+  "slides": [
+  {
+    "index": 0,
+    "titulo": "Slide 1",
+    "backgroundImage": "https://mediasimple.app/uploads/bg1.png",
+    "audioNarration": "https://mediasimple.app/uploads/audio1.mp3"
+  },
+  {
+    "index": 1,
+    "titulo": "Slide 2",
+    "backgroundImage": "https://mediasimple.app/uploads/bg2.png",
+    "avatarVideo": "https://mediasimple.app/uploads/avatar1.mp4",
+    "duration": 5
+  },
+  {
+    "index": 2,
+    "titulo": "Slide 3",
+    "backgroundImage": "https://mediasimple.app/uploads/bg3.png",
+    "avatarVideo": "https://mediasimple.app/uploads/avatar2.mp4",
+    "duration": 5
+  },
+  {
+    "index": 3,
+    "titulo": "Slide 4",
+    "backgroundImage": "https://mediasimple.app/uploads/bg4.png",
+    "avatarVideo": "https://mediasimple.app/uploads/avatar3.mp4",
+    "duration": 5
+  },
+  {
+    "index": 4,
+    "titulo": "Slide 5",
+    "backgroundImage": "https://mediasimple.app/uploads/bg5.png",
+    "avatarVideo": "https://mediasimple.app/uploads/avatar4.mp4",
+    "duration": 5
+  },
+  {
+    "index": 5,
+    "titulo": "Slide 6",
+    "backgroundImage": "https://mediasimple.app/uploads/bg6.png",
+    "avatarVideo": "https://mediasimple.app/uploads/avatar5.mp4",
+    "duration": 5
+  }
+]
+,
+  "resolution": "1080p",
+  "fps": 30,
+  "quality": "high"
+}

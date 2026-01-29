@@ -1,0 +1,2 @@
+curl -X POST http://localhost:4000/api/render/async -H "Content-Type: application/json" -d @C:\Python311\PROYECTOS\render-service-minimal\request.json
+{"jobId":"6711d0d1-4c6b-4ea5-bffb-9158a2369d5b","status":"processing","statusUrl":"/api/render/6711d0d1-4c6b-4ea5-bffb-9158a2369d5b/status"}

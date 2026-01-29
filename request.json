@@ -1,0 +1,22 @@
+{
+  "projectName": "Demo",
+  "slides": [
+    {
+      "index": 0,
+      "titulo": "Slide 1",
+      "backgroundImage": "https://mediasimple.app/uploads/bg1.png",
+      "audioNarration": "https://mediasimple.app/uploads/avatar1.mp4"
+    },
+    {
+      "index": 1,
+      "titulo": "Slide 2",
+      "backgroundImage": "https://mediasimple.app/uploads/bg2.png",
+      "avatarVideo": "https://mediasimple.app/uploads/avatar2.mp4",
+      "duration": 5
+    }
+  ],
+  "resolution": "1080p",
+  "fps": 30,
+  "quality": "high"
+}
+
