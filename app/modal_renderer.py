@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from modal_models import RenderRequest, SlideInput
+from app.modal_models import RenderRequest, SlideInput
 
 
 def _is_url(value: str) -> bool:

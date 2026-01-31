@@ -7,9 +7,9 @@ import modal
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 
-from modal_models import RenderRequest
-from renderer import render_video_to_mp4
-from storage import presign_download_url, upload_mp4
+from app.modal_models import RenderRequest
+from app.modal_renderer import render_video_to_mp4
+from app.modal_storage import presign_download_url, upload_mp4
 
 
 MODAL_APP_NAME = "render-service"
