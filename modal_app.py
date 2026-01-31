@@ -31,9 +31,11 @@ image = (
     .pip_install(
         "fastapi==0.109.0",
         "pydantic==2.5.3",
+        "pydantic-settings==2.1.0",
         "httpx==0.26.0",
         "boto3==1.34.0",
         "ffmpeg-python==0.2.0",
+        "python-dotenv==1.0.0",
     )
     # Modal was only mounting this single file; bake the full package so imports work.
     .add_local_dir("app", remote_path="/root/app")
