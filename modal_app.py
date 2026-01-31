@@ -35,6 +35,8 @@ image = (
         "boto3==1.34.0",
         "ffmpeg-python==0.2.0",
     )
+    # Modal was only mounting this single file; bake the full package so imports work.
+    .add_local_dir("app", remote_path="/root/app")
 )
 
 
