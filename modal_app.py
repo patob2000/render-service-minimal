@@ -48,8 +48,8 @@ image = (
     memory=4096,
     timeout=3600,
     max_containers=4,
-    allow_concurrent_inputs=1,
 )
+@modal.concurrent(max_inputs=1)
 def render_worker(job_id: str, request_dict: dict) -> None:
     jobs[job_id] = {
         "status": "processing",
