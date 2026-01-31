@@ -16,3 +16,6 @@ aiofiles==23.2.1
 
 # Utilidades
 python-dotenv==1.0.0
+
+# AWS S3 (Modal worker uploads)
+boto3==1.34.0
