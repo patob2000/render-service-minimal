@@ -16,10 +16,25 @@ settings = get_settings()
 # Detectar número de CPUs disponibles
 CPU_COUNT = os.cpu_count() or 4
 
-# Configuración global optimizada
-# - threads=0 le dice a FFmpeg que detecte automáticamente
-# - Con 16GB+ RAM podemos usar más threads sin problemas
-FFMPEG_THREADS = 0  # Auto-detect (usará todos los núcleos disponibles)
+# Configuración de threads para FFmpeg.
+# - Si FFMPEG_THREADS no está definido: se mantiene el comportamiento actual (0 = auto-detect).
+# - En Modal recomendamos FFMPEG_THREADS=1 (o 2 si asignas >=4 CPU) para evitar oversubscription.
+def _parse_ffmpeg_threads() -> int:
+    raw = os.environ.get("FFMPEG_THREADS")
+    if raw is None or raw == "":
+        return 0
+    try:
+        value = int(raw)
+    except ValueError:
+        log_warning("Invalid FFMPEG_THREADS env var, falling back to auto", raw=raw)
+        return 0
+    if value < 0:
+        log_warning("Negative FFMPEG_THREADS is invalid, falling back to auto", raw=raw)
+        return 0
+    return value
+
+
+FFMPEG_THREADS = _parse_ffmpeg_threads()
 
 
 def log_info(msg: str, **kwargs):
