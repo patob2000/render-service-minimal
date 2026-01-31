@@ -41,6 +41,7 @@ image = (
 @app.function(
     image=image,
     secrets=[s3_secret],
+    include_source=True,
     cpu=2,
     memory=4096,
     timeout=3600,
@@ -134,7 +135,7 @@ async def render_download(job_id: str):
 
     return RedirectResponse(url=output_url, status_code=302)
 
-@app.function(image=image)
+@app.function(image=image, include_source=True)
 @modal.asgi_app()
 def fastapi_app():
     return web_app
