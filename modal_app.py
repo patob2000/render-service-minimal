@@ -5,6 +5,7 @@ import uuid
 
 import modal
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.responses import RedirectResponse
 
 from app.modal_models import RenderRequest
@@ -86,6 +87,14 @@ def render_worker(job_id: str, request_dict: dict) -> None:
 
 web_app = FastAPI(title="EduSlide Video Render API (Modal)", version="0.1.0")
 
+# ← AGREGAR CORS AQUÍ
+web_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @web_app.post("/api/render/async")
 async def render_async(request: RenderRequest):
