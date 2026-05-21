@@ -151,3 +151,133 @@ printf '%s\n' 1 2 3 4 5 6 | xargs -P 6 -I{} \
 Esperado:
 - Solo 4 jobs avanzan a `processing` simultáneamente
 - Los extras se quedan `queued` hasta que haya capacidad
+
+
+---
+
+## 🔧 Comandos de Testing Rápido
+
+### PowerShell (Windows) - Modal
+
+```powershell
+# 1. SOLICITAR RENDER
+$BASE_URL="https://patob2000--render-service-fastapi-app.modal.run"
+$resp = curl.exe -s -X POST "$BASE_URL/api/render/async" `
+  -H "Content-Type: application/json" `
+  --data-binary "@request.json" | ConvertFrom-Json
+$JOB_ID = $resp.jobId
+Write-Host "Job ID: $JOB_ID"
+
+# 2. MONITOREAR (loop hasta completar)
+while($true) {
+    $s = Invoke-RestMethod -Method Get -Uri "$BASE_URL/api/render/$JOB_ID/status"
+    $s | ConvertTo-Json -Depth 10
+    if($s.status -eq "completed"){
+        Write-Host "✅ Completado!"
+        break
+    }
+    if($s.status -eq "failed"){
+        throw $s.error
+    }
+    Start-Sleep -Seconds 3
+}
+
+# 3. DESCARGAR
+curl.exe -L "$BASE_URL/api/render/$JOB_ID/download" --output "output-$JOB_ID.mp4"
+Write-Host "✅ Video descargado: output-$JOB_ID.mp4"
+```
+
+### CMD (Windows) - Modal
+
+```cmd
+set BASE_URL=https://patob2000--render-service-fastapi-app.modal.run
+
+REM 1. Crear job
+curl.exe -X POST "%BASE_URL%/api/render/async" ^
+  -H "Content-Type: application/json" ^
+  --data-binary "@request.json"
+
+REM 2. Consultar estado (reemplaza JOB_ID)
+curl.exe "%BASE_URL%/api/render/YOUR_JOB_ID/status"
+
+REM 3. Descargar video
+curl.exe -L "%BASE_URL%/api/render/YOUR_JOB_ID/download" --output output.mp4
+```
+
+### Bash (Linux/Mac) - Modal
+
+```bash
+BASE_URL="https://patob2000--render-service-fastapi-app.modal.run"
+
+# 1. Crear job
+RESPONSE=$(curl -s -X POST "$BASE_URL/api/render/async" \
+  -H "Content-Type: application/json" \
+  -d @request.json)
+JOB_ID=$(echo $RESPONSE | jq -r '.jobId')
+echo "Job ID: $JOB_ID"
+
+# 2. Monitorear
+while true; do
+    STATUS=$(curl -s "$BASE_URL/api/render/$JOB_ID/status")
+    echo $STATUS | jq '.'
+    
+    STATE=$(echo $STATUS | jq -r '.status')
+    if [ "$STATE" = "completed" ]; then
+        echo "✅ Completado!"
+        break
+    fi
+    if [ "$STATE" = "failed" ]; then
+        echo "❌ Falló"
+        exit 1
+    fi
+    
+    sleep 3
+done
+
+# 3. Descargar
+curl -L "$BASE_URL/api/render/$JOB_ID/download" -o "output-$JOB_ID.mp4"
+echo "✅ Video descargado"
+```
+
+---
+
+## 🧪 Testing Local (sin Modal)
+
+Si quieres probar el código localmente antes de deployar a Modal:
+
+```bash
+# 1. Ejecutar servidor local
+python -m uvicorn app.main_simple:app --reload --port 4000
+
+# 2. Health check
+curl http://localhost:4000/health
+
+# 3. Crear render
+curl -X POST "http://localhost:4000/api/render/async" \
+  -H "Content-Type: application/json" \
+  --data-binary "@request.json"
+
+# 4. Consultar estado (reemplaza JOB_ID)
+curl "http://localhost:4000/api/render/YOUR_JOB_ID/status"
+
+# 5. Descargar
+curl -L "http://localhost:4000/api/render/YOUR_JOB_ID/download" --output output.mp4
+```
+
+**Windows CMD:**
+```cmd
+REM Health
+curl.exe http://localhost:4000/health
+
+REM Crear render
+curl.exe -X POST "http://localhost:4000/api/render/async" ^
+  -H "Content-Type: application/json" ^
+  --data-binary "@request.json"
+
+REM Status
+curl.exe "http://localhost:4000/api/render/YOUR_JOB_ID/status"
+
+REM Download
+curl.exe -L "http://localhost:4000/api/render/YOUR_JOB_ID/download" --output output.mp4
+```
+

@@ -5,6 +5,7 @@ import uuid
 
 import modal
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware 
 from fastapi.responses import RedirectResponse
 
 from app.modal_models import RenderRequest
@@ -55,12 +56,22 @@ image = (
 def render_worker(job_id: str, request_dict: dict) -> None:
     jobs[job_id] = {
         "status": "processing",
-        "message": "Rendering",
+        "message": "Iniciando renderizado...",
+        "progress": 0,
         "updated_at": time.time(),
     }
 
     try:
-        local_mp4_path, meta = render_video_to_mp4(job_id, request_dict)
+        # Pasar jobs dict para actualizaciones de progreso
+        local_mp4_path, meta = render_video_to_mp4(job_id, request_dict, jobs_dict=jobs)
+
+        # Actualizar progreso antes de subir
+        jobs[job_id] = {
+            "status": "processing",
+            "message": "Subiendo video a S3...",
+            "progress": 95,
+            "updated_at": time.time(),
+        }
 
         s3_key = f"{S3_OUTPUT_PREFIX}{job_id}.mp4"
         upload_mp4(local_mp4_path, s3_key)
@@ -68,7 +79,8 @@ def render_worker(job_id: str, request_dict: dict) -> None:
 
         jobs[job_id] = {
             "status": "completed",
-            "message": "Done",
+            "message": "Video listo",
+            "progress": 100,
             "updated_at": time.time(),
             "s3_key": s3_key,
             "output_url": output_url,
@@ -77,7 +89,7 @@ def render_worker(job_id: str, request_dict: dict) -> None:
     except Exception as e:
         jobs[job_id] = {
             "status": "failed",
-            "message": "Failed",
+            "message": f"Error: {str(e)[:100]}",
             "updated_at": time.time(),
             "error": str(e),
         }
@@ -85,6 +97,26 @@ def render_worker(job_id: str, request_dict: dict) -> None:
 
 
 web_app = FastAPI(title="EduSlide Video Render API (Modal)", version="0.1.0")
+
+# Agregar CORS si no está
+web_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ← AGREGAR ESTE ENDPOINT
+@web_app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "timestamp": time.time(),
+        "ffmpeg_available": True
+    }
+
+
 
 
 @web_app.post("/api/render/async")
@@ -118,6 +150,9 @@ async def render_status(job_id: str):
         "jobId": job_id,
         "status": job.get("status", "unknown"),
         "message": job.get("message", ""),
+        "progress": job.get("progress", 0),
+        "currentSlide": job.get("current_slide"),
+        "totalSlides": job.get("total_slides"),
         "error": job.get("error"),
         "outputUrl": job.get("output_url"),
         "downloadUrl": f"/api/render/{job_id}/download",
