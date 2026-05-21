@@ -196,7 +196,9 @@ def render_slide_with_avatar(
     overlay_x = width - total_size - 48
     overlay_y = height - total_size - 48
     
-    # Composición final - con 2GB RAM podemos usar mejor calidad
+    # Composición final - con 2GB RAM podemos usar mejor calidad.
+    # Forzamos parametros homogeneos entre tipos de clip (CFR, GOP fijo, audio uniforme)
+    # para que el concat final no tenga saltos de timestamps que rompen la sincronizacion.
     output = (
         ffmpeg
         .overlay(bg_with_padding, avatar_processed, x=overlay_x, y=overlay_y, shortest=1)
@@ -206,13 +208,18 @@ def render_slide_with_avatar(
             vcodec='libx264',
             acodec='aac',
             audio_bitrate='192k',
-            preset='veryfast',  # Máxima velocidad
+            preset='veryfast',
             crf=crf,
             r=settings.fps,
             pix_fmt='yuv420p',
+            ar=44100,
+            ac=2,
+            vsync='cfr',
+            g=settings.fps * 2,
             movflags='+faststart',
             t=duration,
-            threads=FFMPEG_THREADS
+            threads=FFMPEG_THREADS,
+            **{'video_track_timescale': 90000},
         )
         .overwrite_output()
     )
@@ -246,26 +253,33 @@ def render_slide_with_audio(
              audio=audio_path,
              duration=duration)
     
-    # Imagen de fondo en loop + audio - con 2GB RAM podemos usar mejor calidad
+    # Imagen de fondo en loop + audio. Sin tune='stillimage' (deja GOP enorme y
+    # frames no uniformes, lo que rompe el concat reencode). Forzamos CFR + GOP fijo
+    # + audio uniforme para que sea identico estructuralmente a render_slide_with_avatar.
     output = (
         ffmpeg
-        .input(background_path, loop=1, t=duration)
+        .input(background_path, loop=1, t=duration, framerate=settings.fps)
         .filter('scale', width, height, force_original_aspect_ratio='decrease')
         .filter('pad', width, height, '(ow-iw)/2', '(oh-ih)/2')
+        .filter('fps', fps=settings.fps)
         .output(
             ffmpeg.input(audio_path),
             output_path,
             vcodec='libx264',
             acodec='aac',
             audio_bitrate='192k',
-            tune='stillimage',
-            preset='veryfast',  # Máxima velocidad
+            preset='veryfast',
             crf=crf,
             r=settings.fps,
             pix_fmt='yuv420p',
+            ar=44100,
+            ac=2,
+            vsync='cfr',
+            g=settings.fps * 2,
             movflags='+faststart',
-            shortest=None,
-            threads=FFMPEG_THREADS
+            t=duration,
+            threads=FFMPEG_THREADS,
+            **{'video_track_timescale': 90000},
         )
         .overwrite_output()
     )
@@ -354,13 +368,26 @@ def concatenate_clips(
             f.write(f"file '{escaped_path}'\n")
     
     try:
-        # Concatenar usando concat demuxer - COPY para evitar re-encoding (ahorra memoria)
+        # Concat demuxer con RE-ENCODE completo (video + audio). Razón:
+        # los clips de avatar (vienen de Wavespeed reprocesados) y los clips imagen+audio
+        # quedan con metadatos sutilmente distintos (timebase, sample rate, SAR, fps efectivo).
+        # Con vcodec=copy/acodec=copy el reproductor cambia de formato a mitad y se escucha
+        # ruido / video congela en las transiciones. Reencodear todo garantiza un MP4 uniforme.
+        # Coste: ~10-20% mas tiempo, pero salida correcta.
+        crf_str = str(crf)
         output = (
             ffmpeg
             .input(list_path, f='concat', safe=0)
             .output(output_path,
-                    vcodec='copy',  # Copiar sin re-codificar
-                    acodec='copy',  # Copiar sin re-codificar
+                    vcodec='libx264',
+                    preset='veryfast',
+                    crf=crf_str,
+                    pix_fmt='yuv420p',
+                    r=settings.fps,
+                    acodec='aac',
+                    audio_bitrate='192k',
+                    ar=44100,
+                    ac=2,
                     movflags='+faststart')
             .overwrite_output()
         )
