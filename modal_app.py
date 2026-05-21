@@ -98,7 +98,8 @@ def render_worker(job_id: str, request_dict: dict) -> None:
 
 web_app = FastAPI(title="EduSlide Video Render API (Modal)", version="0.1.0")
 
-# Agregar CORS si no está
+# CORS abierto: el endpoint /download redirige a S3 y el frontend lo consume desde
+# multiples origenes (localhost dev, prod, easypanel host).
 web_app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -107,7 +108,7 @@ web_app.add_middleware(
     allow_headers=["*"],
 )
 
-# ← AGREGAR ESTE ENDPOINT
+
 @web_app.get("/health")
 async def health():
     return {
@@ -115,8 +116,6 @@ async def health():
         "timestamp": time.time(),
         "ffmpeg_available": True
     }
-
-
 
 
 @web_app.post("/api/render/async")
